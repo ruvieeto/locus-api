@@ -63,6 +63,7 @@ exports.createNotificationOnLike = functions.firestore.document('likes/{id}')
 						createdAt: new Date().toISOString(),
 						recipient: doc.data().userHandle,
 						sender: snapshot.data().userHandle,
+						senderImg: snapshot.data().userImage,
 						type: 'like',
 						read: false,
 						postId: doc.id
@@ -93,6 +94,7 @@ exports.createNotificationOnComment = functions.firestore.document('comments/{id
 						createdAt: new Date().toISOString(),
 						recipient: doc.data().userHandle,
 						sender: snapshot.data().userHandle,
+						senderImg: snapshot.data().userImage,
 						type: 'comment',
 						read: false,
 						postId: doc.id
@@ -118,19 +120,52 @@ exports.onUserImageChange = functions.firestore.document('users/{userId}')
 	.onUpdate((change) => {
 		if(change.before.data().imgUrl !== change.after.data().imgUrl){
 			console.log('image has changed');
-			const batch = db.batch();
+			
+			// Updating on posts
+			const postBatch = db.batch();
 
-			return db.collection('posts')
+			db.collection('posts')
 				.where('userHandle', '==', change.before.data().handle)
 				.get()
 				.then(data => {
 					data.forEach(post => {
 						const postRef = db.doc(`/posts/${post.id}`)
-						batch.update(postRef, { userImage: change.after.data().imgUrl})
+						postBatch.update(postRef, { userImage: change.after.data().imgUrl})
 					})
 
-					return batch.commit();
+					return postBatch.commit();
 				})
+
+			// Updating on comments
+			const commentBatch = db.batch();
+
+			db.collection('comments')
+				.where('userHandle', '==', change.before.data().handle)
+				.get()
+				.then(data => {
+					data.forEach(comment => {
+						const commentRef = db.doc(`/comments/${comment.id}`)
+						commentBatch.update(commentRef, { userImage: change.after.data().imgUrl})
+					})
+
+					return commentBatch.commit();
+				})
+
+			// Updating on notifications
+			const notifBatch = db.batch();
+
+			db.collection('notifications')
+				.where('sender', '==', change.before.data().handle)
+				.get()
+				.then(data => {
+					data.forEach(notif => {
+						const postRef = db.doc(`/notifications/${notif.id}`)
+						notifBatch.update(postRef, { senderImg: change.after.data().imgUrl})
+					})
+
+					return notifBatch.commit();
+				})
+
 		} else {
 			return true;
 		}

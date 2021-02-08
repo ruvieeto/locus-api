@@ -146,7 +146,7 @@ exports.commentOnPost = (req, res) => {
 
 // Like a post
 exports.likePost = (req, res) => {
-	const { handle } = req.user;
+	const { handle, imgUrl } = req.user;
 	const { postId } = req.params;
 
 	// Returns a document for the "like" if the user (userHandle) currently likes the post (postId)
@@ -177,7 +177,8 @@ exports.likePost = (req, res) => {
 			if(data.empty){
 				return db.collection('likes').add({
 					postId,
-					userHandle: handle
+					userHandle: handle,
+					userImage: imgUrl
 				})
 				.then(() => {
 					postData.likeCount++;
