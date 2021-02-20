@@ -61,7 +61,7 @@ exports.deletePost = (req, res) => {
 	postDocument.get()
 		.then(doc => {
 			if(!doc.exists){
-				return res.status(404).json({ error: 'Scream not found' });
+				return res.status(404).json({ error: 'Post not found' });
 			}
 			if(doc.data().userHandle !== handle){
 				return res.status(403).json({ error: 'Unauthorized' });
@@ -70,7 +70,7 @@ exports.deletePost = (req, res) => {
 			}
 		})
 		.then(() => {
-			res.json({ message: 'Scream deleted successfully' })
+			res.json({ message: 'Post deleted successfully' })
 		})
 		.catch(err => {
 			console.error(err);
