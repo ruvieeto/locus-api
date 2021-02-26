@@ -122,7 +122,8 @@ exports.commentOnPost = (req, res) => {
 		createdAt: new Date().toISOString(),
 		postId,
 		userHandle: handle,
-		userImage: imgUrl
+		userImage: imgUrl,
+		commentId: ""
 	}
 
 	db.doc(`/posts/${postId}`).get()
@@ -136,11 +137,51 @@ exports.commentOnPost = (req, res) => {
 		.then(() => {
 			return db.collection('comments').add(newComment)
 		})
+		.then((commentRef) => {
+			newComment.commentId = commentRef.id;
+			return db.doc(`/comments/${commentRef.id}`).update({ commentId: commentRef.id })
+		})
 		.then(()=>{
 			return res.status(200).json(newComment)
 		})
 		.catch(err => {
 			return res.status(500).json({ error: 'Something went wrong' })
+		})
+}
+
+// Delete a comment
+exports.deleteComment = (req, res) => {
+	const { commentId } = req.params;
+	const { handle } = req.user;
+	const commentDocument = db.doc(`/comments/${commentId}`);
+
+	commentDocument.get()
+		.then(doc => {
+			if(!doc.exists){
+				return res.status(404).json({ error: 'Comment not found' });
+			}
+			if(doc.data().userHandle !== handle){
+				return res.status(403).json({ error: 'Unauthorized' });
+			} else {
+				const postId = doc.data().postId;
+
+				db.doc(`/posts/${postId}`).get()
+					.then((postDoc) => {
+						postDoc.ref.update({ commentCount: postDoc.data().commentCount - 1 })
+					})
+					.catch(err => {
+						res.status(500).json({ error: err.code });
+					})
+
+				return commentDocument.delete()
+			}
+		})
+		.then(() => {
+			res.json({ message: 'Comment deleted successfully' })
+		})
+		.catch(err => {
+			console.error(err);
+			res.status(500).json({ error: err.code });
 		})
 }
 

@@ -10,6 +10,7 @@ const {
 	createPost, 
 	getPost,
 	commentOnPost,
+	deleteComment,
 	likePost,
 	unlikePost,
 	deletePost
@@ -36,6 +37,7 @@ app.post('/post/:postId/comment', FBAuth, commentOnPost);
 app.get('/post/:postId/like', FBAuth, likePost);
 app.get('/post/:postId/unlike', FBAuth, unlikePost);
 app.delete('/post/:postId', FBAuth, deletePost);
+app.delete('/comment/:commentId', FBAuth, deleteComment);
 // TO DO: Delete comment
 
 // User Routes
@@ -77,6 +79,15 @@ exports.createNotificationOnLike = functions.firestore.document('likes/{id}')
 
 // Remove notification for unliked post
 exports.deleteNotificationOnUnlike = functions.firestore.document('likes/{id}')
+	.onDelete((snapshot) => {
+		return db.doc(`/notifications/${snapshot.id}`).delete()
+			.catch(err => {
+				console.error(err);
+			})
+	})
+
+// Remove notification for deleted comment
+exports.deleteNotificationOnCommentDelete = functions.firestore.document('comments/{id}')
 	.onDelete((snapshot) => {
 		return db.doc(`/notifications/${snapshot.id}`).delete()
 			.catch(err => {
