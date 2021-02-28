@@ -1,8 +1,15 @@
+// Firebase Cloud Functions
 const functions = require('firebase-functions');
 
+// Express
 const express = require('express');
 const app = express();
 
+// CORS
+const cors =  require('cors');
+app.use(cors());
+
+// Firestore DB
 const { db } = require('./util/admin');
 
 const { 
