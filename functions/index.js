@@ -6,7 +6,7 @@ const express = require('express');
 const app = express();
 
 // CORS
-const cors =  require('cors');
+const cors = require('cors');
 app.use(cors());
 
 // Firestore DB
